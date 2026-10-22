@@ -12,22 +12,12 @@
 $titre = "Catalogue - Ma médiathèque";
 
 /*
- * Création d'un tableau contenant plusieurs livres.
+ * Chargement du tableau de livres depuis src/donnees.php.
  *
- * $livres est un tableau indexé : ses éléments sont numérotés
- * automatiquement à partir de 0.
- *
- * Chaque élément est lui-même un tableau associatif :
- * on accède aux informations par les clés 'titre', 'auteur' et 'annee'.
- *
- * Exemple :
- * $livres[0]['titre'] contient "1984".
+ * Le tableau est désormais partagé entre la liste des livres
+ * et leur fiche détaillée, afin d'éviter de dupliquer les données.
  */
-$livres = [
-    ["titre" => "1984", "auteur" => "George Orwell", "annee" => 1949],
-    ["titre" => "Germinal", "auteur" => "Émile Zola", "annee" => 1885],
-    ["titre" => "Les Misérables", "auteur" => "Victor Hugo", "annee" => 1862]
-];
+require_once __DIR__ . '/../src/donnees.php';
 
 /*
  * require permet d'inclure et d'exécuter un autre fichier PHP.
@@ -67,12 +57,13 @@ require __DIR__ . '/../includes/header.php';
      * <td>    : cellule contenant une donnée
      */
     ?>
-    <table>
+    <table class="tableau-livres">
         <thead>
             <tr>
                 <th>Titre</th>
                 <th>Auteur</th>
                 <th>Année</th>
+                <th>Action</th>
             </tr>
         </thead>
 
@@ -115,6 +106,22 @@ require __DIR__ . '/../includes/header.php';
                     <td><?= htmlspecialchars($livre['titre']) ?></td>
                     <td><?= htmlspecialchars($livre['auteur']) ?></td>
                     <td><?= $livre['annee'] ?></td>
+
+                    <?php
+                    /*
+                     * Le lien transmet l'identifiant du livre dans l'URL.
+                     *
+                     * Exemple : detailLivre.php?id=2
+                     *
+                     * La page detailLivre.php récupérera cet identifiant
+                     * pour rechercher et afficher le livre correspondant.
+                     */
+                    ?>
+                    <td>
+                        <a href="detailLivre.php?id=<?= $livre['id'] ?>">
+                            Voir le détail
+                        </a>
+                    </td>
                 </tr>
             <?php endforeach; ?>
         </tbody>

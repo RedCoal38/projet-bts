@@ -32,3 +32,82 @@ footer {
     text-align: center;
     padding: 20px;
 }
+
+
+/* ===== Catalogue des livres ===== */
+
+.tableau-livres {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background-color: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.tableau-livres th,
+.tableau-livres td {
+    padding: 14px 18px;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.tableau-livres th {
+    background-color: #30475e;
+    color: white;
+}
+
+.tableau-livres tbody tr:nth-child(even) {
+    background-color: #f5f7fa;
+}
+
+.tableau-livres tbody tr:hover {
+    background-color: #eaf2f8;
+}
+
+.tableau-livres a {
+    display: inline-block;
+    padding: 7px 12px;
+    background-color: #30475e;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+}
+
+.tableau-livres a:hover {
+    background-color: #1d3557;
+}
+
+
+/* ===== Fiche détaillée d'un livre ===== */
+
+.fiche-livre {
+    max-width: 800px;
+    margin: 30px auto;
+}
+
+.carte-livre {
+    background-color: white;
+    padding: 30px;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+}
+
+.carte-livre h1 {
+    margin-top: 0;
+    margin-bottom: 25px;
+    color: #30475e;
+}
+
+.carte-livre p {
+    padding: 12px 0;
+    border-bottom: 1px solid #eee;
+    margin: 0;
+    line-height: 1.6;
+}
+
+.carte-livre p:last-child {
+    border-bottom: none;
+}
