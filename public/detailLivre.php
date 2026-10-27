@@ -20,21 +20,21 @@ require __DIR__ . '/../includes/header.php';
 ?>
 <main class="fiche-livre">
     <?php if ($livre === null): ?>
-        <?php // Gérer l'absence de résultat évite les erreurs de clés inexistantes. ?>
+        <?php // Gérer l'absence de résultat évite les erreurs d'accès à un objet inexistant. ?>
         <h1>Livre introuvable</h1>
         <p>Aucun livre ne correspond à cet identifiant.</p>
     <?php else: ?>
         <section class="carte-livre">
-            <h1><?= htmlspecialchars($livre['titre']) ?></h1>
+            <h1><?= htmlspecialchars($livre->getTitre()) ?></h1>
 
             <p>
                 <strong>Auteur :</strong>
-                <?= htmlspecialchars($livre['auteur']) ?>
+                <?= htmlspecialchars($livre->getAuteur()) ?>
             </p>
 
             <p>
                 <strong>Année :</strong>
-                <?= $livre['annee'] ?>
+                <?= $livre->getAnnee() ?>
             </p>
         </section>
     <?php endif; ?>

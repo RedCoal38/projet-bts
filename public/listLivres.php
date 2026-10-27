@@ -70,21 +70,11 @@ require __DIR__ . '/../includes/header.php';
         <tbody>
             <?php
             /*
-             * foreach parcourt les éléments du tableau $livres.
-             *
-             * À chaque passage, $livre contient les informations
-             * d'un livre différent.
-             *
-             * 1er passage : "1984"
-             * 2e passage : "Germinal"
-             * 3e passage : "Les Misérables"
-             *
-             * La syntaxe foreach (...): ... endforeach;
-             * est une alternative aux accolades { }.
-             * Elle est pratique lorsqu'on mélange PHP et HTML.
-             *
-             * Chaque passage génère une nouvelle ligne <tr>.
-             */
+            * foreach parcourt le tableau $livres.
+            *
+            * Chaque élément $livre est désormais un objet de la classe Livre.
+            * Les getters permettent d'accéder à ses propriétés privées.
+            */
             foreach ($livres as $livre):
             ?>
                 <tr>
@@ -103,9 +93,9 @@ require __DIR__ . '/../includes/header.php';
                      * elle peut être affichée directement.
                      */
                     ?>
-                    <td><?= htmlspecialchars($livre['titre']) ?></td>
-                    <td><?= htmlspecialchars($livre['auteur']) ?></td>
-                    <td><?= $livre['annee'] ?></td>
+                    <td><?= htmlspecialchars($livre->getTitre()) ?></td>
+                    <td><?= htmlspecialchars($livre->getAuteur()) ?></td>
+                    <td><?= $livre->getAnnee() ?></td>
 
                     <?php
                     /*
@@ -118,9 +108,9 @@ require __DIR__ . '/../includes/header.php';
                      */
                     ?>
                     <td>
-                        <a href="detailLivre.php?id=<?= $livre['id'] ?>">
-                            Voir le détail
-                        </a>
+                    <a href="detailLivre.php?id=<?= $livre->getId() ?>">
+                        Voir le détail
+                    </a>
                     </td>
                 </tr>
             <?php endforeach; ?>
