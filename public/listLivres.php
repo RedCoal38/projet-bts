@@ -4,20 +4,24 @@
  * PAGE : Catalogue des livres
  *
  * Cette page affiche une liste de livres dans un tableau HTML.
- * Pour le moment, les données sont stockées dans un tableau PHP.
- * Plus tard, elles seront récupérées dans une base de données.
+ * Les données sont désormais récupérées depuis MariaDB
+ * grâce à PDO.
  */
 
 // Définition du titre de la page, utilisé dans header.php.
 $titre = "Catalogue - Ma médiathèque";
 
 /*
- * Chargement du tableau de livres depuis src/donnees.php.
+ * Chargement des livres depuis la base de données.
  *
- * Le tableau est désormais partagé entre la liste des livres
- * et leur fiche détaillée, afin d'éviter de dupliquer les données.
+ * Le fichier src/Database/livres.php contient la fonction
+ * recupererLivres(), qui exécute une requête SQL avec PDO.
+ *
+ * La fonction retourne un tableau de tableaux associatifs.
  */
-require_once __DIR__ . '/../src/donnees.php';
+require_once __DIR__ . '/../src/Database/livres.php';
+
+$livres = recupererLivres();
 
 /*
  * require permet d'inclure et d'exécuter un autre fichier PHP.
@@ -70,47 +74,50 @@ require __DIR__ . '/../includes/header.php';
         <tbody>
             <?php
             /*
-            * foreach parcourt le tableau $livres.
-            *
-            * Chaque élément $livre est désormais un objet de la classe Livre.
-            * Les getters permettent d'accéder à ses propriétés privées.
-            */
+             * foreach parcourt le tableau $livres.
+             *
+             * Chaque élément $livre est maintenant un tableau
+             * associatif retourné par PDO.
+             *
+             * On accède donc aux valeurs avec :
+             * $livre['titre']
+             *
+             * et non plus avec les méthodes d'un objet Livre.
+             */
             foreach ($livres as $livre):
             ?>
                 <tr>
                     <?php
                     /*
                      * <?= ... ?> est une écriture courte de echo.
-                     * Elle permet d'afficher une valeur dans le HTML.
                      *
-                     * $livre['titre'] récupère le titre du livre courant.
+                     * htmlspecialchars() empêche les caractères
+                     * spéciaux d'être interprétés comme du HTML.
                      *
-                     * htmlspecialchars() convertit les caractères
-                     * spéciaux HTML pour éviter qu'ils soient interprétés
-                     * comme du code HTML ou JavaScript.
-                     *
-                     * L'année est un entier dans notre tableau :
-                     * elle peut être affichée directement.
+                     * L'auteur n'est pas encore récupéré :
+                     * il faudra effectuer des jointures SQL
+                     * avec les tables ecrire et auteur.
                      */
                     ?>
-                    <td><?= htmlspecialchars($livre->getTitre()) ?></td>
-                    <td><?= htmlspecialchars($livre->getAuteur()) ?></td>
-                    <td><?= $livre->getAnnee() ?></td>
+                    <td><?= htmlspecialchars($livre['titre']) ?></td>
+                    <td>Non renseigné</td>
+                    <td><?= htmlspecialchars((string) $livre['annee_publication']) ?></td>
 
                     <?php
                     /*
-                     * Le lien transmet l'identifiant du livre dans l'URL.
+                     * Le lien transmet l'identifiant du livre
+                     * dans l'URL.
                      *
                      * Exemple : detailLivre.php?id=2
                      *
-                     * La page detailLivre.php récupérera cet identifiant
-                     * pour rechercher et afficher le livre correspondant.
+                     * La page detailLivre.php utilise cet identifiant
+                     * pour retrouver le livre dans MariaDB.
                      */
                     ?>
                     <td>
-                    <a href="detailLivre.php?id=<?= $livre->getId() ?>">
-                        Voir le détail
-                    </a>
+                        <a href="detailLivre.php?id=<?= $livre['id_livre'] ?>">
+                            Voir le détail
+                        </a>
                     </td>
                 </tr>
             <?php endforeach; ?>
