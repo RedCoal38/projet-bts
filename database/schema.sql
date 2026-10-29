@@ -32,6 +32,7 @@ CREATE TABLE livre (
     titre VARCHAR(255) NOT NULL,
     isbn VARCHAR(20),
     annee_publication SMALLINT UNSIGNED,
+    prix DECIMAL(8,2) NOT NULL,
     id_categorie INT UNSIGNED NOT NULL,
 
     CONSTRAINT pk_livre
