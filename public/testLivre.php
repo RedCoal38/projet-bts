@@ -28,7 +28,7 @@ error_reporting(E_ALL);
 // Chargement de notre classe métier Livre.
 require_once __DIR__ . '/../src/Model/Livre.php';
 
-$livre = new Livre(1, '1984', 1949, 12.50);
+$livre = new Livre(1, '1984', 'Orwell', 1949, 12.50);
 
 echo '<h2>Test de la classe Livre — encapsulation</h2>';
 echo '<p>Titre : ' . htmlspecialchars($livre->getTitre(), ENT_QUOTES, 'UTF-8') . '</p>';
