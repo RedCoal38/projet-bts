@@ -1,5 +1,6 @@
 <?php
 // Demande à PHP d'afficher les erreurs dans le navigateur.
+
 ini_set('display_errors', '1');
 
 // Demande l'affichage des erreurs survenant au démarrage de PHP.
