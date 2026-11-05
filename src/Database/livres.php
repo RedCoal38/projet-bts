@@ -49,14 +49,55 @@ function recupererLivres(): array
     $pdo = creerConnexion();
 
     // 2. Préparer le texte de notre requête SQL.
-    // SELECT * permet de récupérer toutes les colonnes
-    // de la table livre.
-    $sql = 'SELECT * FROM livre';
+    //
+    // Nous conservons les colonnes nécessaires à la création d'un objet Livre.
+    // Les alias l, e et a abrègent les noms des tables :
+    // - livre l : informations générales sur le livre ;
+    // - ecrire e : association entre un livre et ses auteurs ;
+    // - auteur a : prénom et nom des auteurs.
+    //
+    // LEFT JOIN conserve également les livres sans auteur associé.
+    // Avec INNER JOIN, ces livres disparaîtraient du résultat.
+    //
+    // Une jointure simple peut renvoyer plusieurs lignes pour un livre
+    // ayant plusieurs auteurs. GROUP_CONCAT() réunit leurs noms dans
+    // une seule chaîne, par exemple « Neil Gaiman, Terry Pratchett ».
+    //
+    // CONCAT_WS(' ', a.prenom, a.nom) assemble prénom et nom avec
+    // un espace, en ignorant les valeurs NULL.
+    // ORDER BY a.nom donne un ordre aux auteurs.
+    // SEPARATOR ', ' sépare leurs noms par une virgule et un espace.
+    // GROUP BY regroupe les lignes qui appartiennent au même livre.
+    //
+    // AS auteurs nomme la colonne calculée : on pourra ensuite
+    // lire sa valeur avec $ligne['auteurs'].
+    $sql = <<<'SQL'
+        SELECT
+            l.id_livre,
+            l.titre,
+            l.annee_publication,
+            l.prix,
+            GROUP_CONCAT(
+                CONCAT_WS(' ', a.prenom, a.nom)
+                ORDER BY a.nom, a.prenom
+                SEPARATOR ', '
+            ) AS auteurs
+        FROM livre l
+        LEFT JOIN ecrire e ON e.id_livre = l.id_livre
+        LEFT JOIN auteur a ON a.id_auteur = e.id_auteur
+        GROUP BY
+            l.id_livre,
+            l.titre,
+            l.annee_publication,
+            l.prix
+        ORDER BY l.titre
+        SQL;
 
     // 3. Envoyer la requête SQL à MariaDB.
     // query() exécute directement la requête.
     // Elle retourne un objet PDOStatement qui représente
     // le résultat de la requête.
+    // Aucun paramètre utilisateur n'est inséré dans cette requête.
     $requete = $pdo->query($sql);
 
     // 4. Récupérer toutes les lignes du résultat.
@@ -73,7 +114,8 @@ function recupererLivres(): array
     //     'id_livre' => 1,
     //     'titre' => '1984',
     //     'annee_publication' => 1949,
-    //     'prix' => '12.50'
+    //     'prix' => '9.50',
+    //     'auteurs' => 'George Orwell'
     // ]
     //
     // Si aucun livre n'existe, fetchAll() retourne [].
@@ -88,20 +130,20 @@ function recupererLivres(): array
     foreach ($lignes as $ligne) {
         // new Livre(...) appelle le constructeur de la classe Livre.
         //
-        // Les noms des clés viennent des colonnes SQL :
-        // id_livre, titre, annee_publication et prix.
+        // Les noms des clés viennent des colonnes SQL ou de leurs alias :
+        // id_livre, titre, annee_publication, prix et auteurs.
         //
         // (int) et (float) convertissent les valeurs vers
         // les types attendus par le constructeur de Livre.
         //
-        // L'auteur est provisoirement « Non renseigné » :
-        // la table livre ne contient pas directement son nom.
-        // Les auteurs seront récupérés grâce aux jointures SQL
-        // dans une prochaine étape du projet.
+        // S'il n'existe aucun auteur associé au livre,
+        // GROUP_CONCAT() renvoie NULL. L'opérateur ?? permet alors
+        // de fournir la valeur de remplacement « Non renseigné ».
+        // Cela respecte le type string attendu par Livre.
         $livres[] = new Livre(
             (int) $ligne['id_livre'],
             $ligne['titre'],
-            'Non renseigné',
+            $ligne['auteurs'] ?? 'Non renseigné',
             (int) $ligne['annee_publication'],
             (float) $ligne['prix']
         );
@@ -141,7 +183,31 @@ function recupererLivreParId(int $id): ?Livre
     // Cela permet d'éviter de construire une requête SQL
     // en concaténant directement une valeur fournie
     // par l'utilisateur.
-    $sql = 'SELECT * FROM livre WHERE id_livre = :id';
+    //
+    // Les LEFT JOIN récupèrent les auteurs éventuels du livre.
+    // GROUP_CONCAT() regroupe leurs noms afin de ne renvoyer
+    // qu'une seule ligne par livre, même s'il a plusieurs auteurs.
+    $sql = <<<'SQL'
+        SELECT
+            l.id_livre,
+            l.titre,
+            l.annee_publication,
+            l.prix,
+            GROUP_CONCAT(
+                CONCAT_WS(' ', a.prenom, a.nom)
+                ORDER BY a.nom, a.prenom
+                SEPARATOR ', '
+            ) AS auteurs
+        FROM livre l
+        LEFT JOIN ecrire e ON e.id_livre = l.id_livre
+        LEFT JOIN auteur a ON a.id_auteur = e.id_auteur
+        WHERE l.id_livre = :id
+        GROUP BY
+            l.id_livre,
+            l.titre,
+            l.annee_publication,
+            l.prix
+        SQL;
 
     // 3. Préparer la requête SQL.
     //
@@ -181,12 +247,13 @@ function recupererLivreParId(int $id): ?Livre
     // Comme dans recupererLivres(), on utilise les valeurs
     // du tableau associatif pour appeler le constructeur.
     //
-    // L'auteur sera complété lorsque nous aborderons
-    // les jointures entre livre, ecrire et auteur.
+    // Le constructeur de Livre attend toujours une chaîne
+    // pour l'auteur. Elle contient désormais tous les auteurs
+    // regroupés par SQL, ou « Non renseigné » si nécessaire.
     return new Livre(
         (int) $ligne['id_livre'],
         $ligne['titre'],
-        'Non renseigné',
+        $ligne['auteurs'] ?? 'Non renseigné',
         (int) $ligne['annee_publication'],
         (float) $ligne['prix']
     );
