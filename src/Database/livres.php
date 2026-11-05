@@ -27,13 +27,19 @@ require_once __DIR__ . '/../Model/Livre.php';
 /*
  * FONCTION : recupererLivres()
  *
- * Objectif : récupérer tous les livres enregistrés dans la base.
+ * Objectif : récupérer les livres enregistrés dans la base,
+ * éventuellement filtrés par une partie de leur titre.
+ *
+ * Paramètre :
+ *   $recherche : texte recherché dans le titre (chaîne facultative).
+ *   Si la recherche est vide, tous les livres sont renvoyés.
  *
  * Retour :
  *   Un tableau contenant des OBJETS Livre.
  *
  * Exemple d'utilisation :
- *   $livres = recupererLivres();
+ *   $livres = recupererLivres(); // tous les livres
+ *   $livres = recupererLivres("Dune"); // titres contenant « Dune »
  *   echo $livres[0]->getTitre();
  *
  * Attention à la différence :
@@ -42,11 +48,15 @@ require_once __DIR__ . '/../Model/Livre.php';
  *
  * @return Livre[]
  */
-function recupererLivres(): array
+function recupererLivres(string $recherche = ''): array
 {
     // 1. Établir une connexion avec MariaDB.
     // La fonction creerConnexion() retourne un objet PDO.
     $pdo = creerConnexion();
+
+    // trim() enlève les espaces inutiles en début et en fin de recherche.
+    // Une recherche vide signifie « afficher tous les livres ».
+    $recherche = trim($recherche);
 
     // 2. Préparer le texte de notre requête SQL.
     //
@@ -85,6 +95,19 @@ function recupererLivres(): array
         FROM livre l
         LEFT JOIN ecrire e ON e.id_livre = l.id_livre
         LEFT JOIN auteur a ON a.id_auteur = e.id_auteur
+        SQL;
+
+    // Une clause WHERE peut être placée après les jointures et avant GROUP BY.
+    // Nous ne l'ajoutons que si l'utilisateur a saisi une recherche.
+    $rechercheActive = $recherche !== '';
+    if ($rechercheActive) {
+        $sql .= "\nWHERE l.titre LIKE :recherche";
+    }
+
+    // GROUP BY rassemble les auteurs de chaque livre.
+    // ORDER BY trie les résultats affichés par titre.
+    $sql .= <<<'SQL'
+
         GROUP BY
             l.id_livre,
             l.titre,
@@ -93,12 +116,23 @@ function recupererLivres(): array
         ORDER BY l.titre
         SQL;
 
-    // 3. Envoyer la requête SQL à MariaDB.
-    // query() exécute directement la requête.
-    // Elle retourne un objet PDOStatement qui représente
-    // le résultat de la requête.
-    // Aucun paramètre utilisateur n'est inséré dans cette requête.
-    $requete = $pdo->query($sql);
+    // 3. Exécuter la requête SQL selon la recherche demandée.
+    //
+    // Sans recherche, query() exécute directement le SELECT sans paramètre.
+    // Avec recherche, prepare() prépare le SQL contenant :recherche,
+    // puis execute() transmet séparément la valeur recherchée.
+    // Cela évite d'injecter directement une valeur utilisateur dans SQL.
+    //
+    // Les signes % ajoutés à la valeur signifient « n'importe quelle
+    // suite de caractères ». « %Dune% » correspond donc à « Dune ».
+    // NB : les signes % et _ éventuellement saisis par l'utilisateur
+    // restent ici des caractères spéciaux pour LIKE.
+    if (!$rechercheActive) {
+        $requete = $pdo->query($sql);
+    } else {
+        $requete = $pdo->prepare($sql);
+        $requete->execute(['recherche' => '%' . $recherche . '%']);
+    }
 
     // 4. Récupérer toutes les lignes du résultat.
     //

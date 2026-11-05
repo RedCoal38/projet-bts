@@ -22,7 +22,21 @@ $titre = "Catalogue - Ma médiathèque";
  * Chaque livre conserve ses méthodes getTitre(), getAuteur(), etc.
  */
 require_once __DIR__ . '/../src/Database/livres.php';
-$livres = recupererLivres();
+/*
+ * Le formulaire ci-dessous envoie son texte avec la méthode GET.
+ * Exemple : listLivres.php?recherche=Dune
+ *
+ * filter_input() lit le paramètre recherche dans l'URL.
+ * Si le paramètre n'existe pas ou n'est pas une chaîne valide,
+ * on considère que la recherche est vide et on affiche tout.
+ * trim() enlève les espaces inutiles au début et à la fin.
+ */
+$parametreRecherche = filter_input(INPUT_GET, 'recherche', FILTER_UNSAFE_RAW);
+$recherche = is_string($parametreRecherche) ? trim($parametreRecherche) : '';
+
+// Une recherche vide récupère tout le catalogue.
+// Sinon, recupererLivres() filtre les titres dans la requête SQL.
+$livres = recupererLivres($recherche);
 
 /*
  * require permet d'inclure et d'exécuter un autre fichier PHP.
@@ -52,6 +66,30 @@ require __DIR__ . '/../includes/header.php';
 
     <?php
     /*
+     * FORMULAIRE DE RECHERCHE
+     *
+     * method="get" ajoute la valeur saisie à l'URL.
+     * name="recherche" indique le nom du paramètre GET.
+     * L'attribut value conserve le texte saisi après l'envoi.
+     * htmlspecialchars() protège l'affichage de cette valeur
+     * lorsqu'elle est réinsérée dans un attribut HTML.
+     */
+    ?>
+    <form method="get" action="listLivres.php">
+        <label for="recherche">Rechercher un livre par titre :</label>
+        <input
+            type="search"
+            id="recherche"
+            name="recherche"
+            value="<?= htmlspecialchars($recherche, ENT_QUOTES, 'UTF-8') ?>"
+            placeholder="Ex. : Dune"
+        >
+        <button type="submit">Rechercher</button>
+        <a href="listLivres.php">Afficher tous les livres</a>
+    </form>
+
+    <?php
+    /*
      * Construction d'un tableau HTML.
      *
      * <table> : tableau
@@ -73,6 +111,12 @@ require __DIR__ . '/../includes/header.php';
         </thead>
 
         <tbody>
+            <?php if ($livres === []): ?>
+                <?php // Aucun résultat : afficher un message à la place des lignes. ?>
+                <tr>
+                    <td colspan="4">Aucun livre trouvé pour cette recherche.</td>
+                </tr>
+            <?php endif; ?>
             <?php
             /*
              * foreach parcourt le tableau $livres.
